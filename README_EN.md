@@ -1,5 +1,7 @@
 # ComfyUI Prompt Image Manager
 
+[English](./README_EN.md) | [中文](./README.md)
+
 This is a custom node extension for ComfyUI designed to help users organize, save, and manage prompts and generated images by **Groups**.
 This plugin is perfect for debugging prompts. It allows you to save specific generation results (along with their parameters/prompts) into categories, and you can preview and load these saved histories anytime via the built-in Browser panel with a single click.
 

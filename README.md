@@ -1,5 +1,7 @@
 # ComfyUI Prompt Image Manager
 
+[English](./README_EN.md) | [中文](./README.md)
+
 这是一个为 ComfyUI 设计的自定义节点扩展（Custom Node），旨在帮助用户按**分组**（Group）整理、保存和管理提示词（Prompt）及生成的最终图像。
 这个插件非常适合在调试提示词时，将满意的特定生成结果（以及其参数/提示词）分类保存，并可以通过内置的浏览器面板（Browser）随时预览和一键加载这些保存的历史记录。
 
