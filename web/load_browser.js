@@ -171,7 +171,7 @@ function el(tag, attrs = {}, ...children) {
  * 直接在节点上显示图片预览和提示词文本。
  * 不依赖 ComfyUI 的 onExecuted 链，直接操作 node.imgs 和 widget。
  */
-function applyPreviewToNode(node, imageInfo, promptText) {
+function applyPreviewToNode(node, imageInfo, promptText, itemName = null) {
   // --- 图片预览 ---
   if (imageInfo && imageInfo.filename) {
     const img = new Image();
@@ -188,6 +188,16 @@ function applyPreviewToNode(node, imageInfo, promptText) {
       });
     };
     img.src = viewUrl(imageInfo);
+  }
+
+  // --- Item Name 文本 ---
+  if (node._pimNameEl) {
+    if (itemName) {
+      node._pimNameEl.textContent = itemName;
+      node._pimNameEl.style.display = "block";
+    } else {
+      node._pimNameEl.style.display = "none";
+    }
   }
 
   // --- 提示词文本 ---
@@ -259,7 +269,7 @@ function openBrowser(node) {
           // 直接使用当前已加载的数据在节点上显示预览
           const it = currentItems[idx];
           if (it) {
-            applyPreviewToNode(node, it.image, it.prompt_clean || "");
+            applyPreviewToNode(node, it.image, it.prompt_clean || "", it.item_name || "");
           }
 
           node.setDirtyCanvas(true, true);
@@ -466,16 +476,33 @@ app.registerExtension({
       // 通过 applyPreviewToNode 直接显示图片和文本
       const imgs = output?.images;
       const texts = output?.text;
+      const itemName = output?.item_name?.[0] || ""; // 需要后端支持，如果后端没返回item_name则为空
       if (imgs && imgs.length > 0) {
-        applyPreviewToNode(this, imgs[0], texts?.[0] ?? null);
+        applyPreviewToNode(this, imgs[0], texts?.[0] ?? null, itemName);
       } else if (texts && texts.length > 0) {
-        applyPreviewToNode(this, null, texts[0]);
+        applyPreviewToNode(this, null, texts[0], itemName);
       }
     };
 
     const orig = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = orig?.apply(this, arguments);
+
+      // 预创建 item_name 显示区域
+      const nameEl = document.createElement("div");
+      nameEl.style.cssText =
+        "font: 11px/1.5 ui-sans-serif, system-ui, sans-serif; " +
+        "color: #aae; font-weight: bold; padding: 2px 6px; " +
+        "background: rgba(0,0,0,0.2); border-radius: 4px; " +
+        "margin-bottom: 2px; text-align: center; " +
+        "white-space: nowrap; overflow: hidden; text-overflow: ellipsis;";
+      nameEl.textContent = "";
+      nameEl.style.display = "none";
+      this._pimNameEl = nameEl;
+      const itemNameWidget = this.addDOMWidget("item_name_display", "customtext", nameEl, {
+        serialize: false,
+        hideOnZoom: false,
+      });
 
       // 预创建提示词文本显示区域
       const textEl = document.createElement("div");
@@ -486,10 +513,20 @@ app.registerExtension({
         "border-radius:6px; padding:6px; min-height:40px; max-height:150px;";
       textEl.textContent = "（点击 Browse 选择提示词）";
       this._pimTextEl = textEl;
-      this.addDOMWidget("prompt_preview", "customtext", textEl, {
+      const promptWidget = this.addDOMWidget("prompt_preview", "customtext", textEl, {
         serialize: false,
         hideOnZoom: false,
       });
+
+      // 调整顺序：将 item_name_display 和 prompt_preview 放到最前面原生控件 （比如 item_index）下面。
+      // ComfyUI默认将addDOMWidget放至widgets数组最后。如果要在item_index下，可以把它们移至 item_index 的后面。
+      const idxIndex = this.widgets?.findIndex(w => w.name === "item_index") ?? -1;
+      if (idxIndex >= 0 && this.widgets) {
+        // 先移除新添加的两个
+        this.widgets = this.widgets.filter(w => w.name !== "item_name_display" && w.name !== "prompt_preview");
+        // 然后插入到 item_index 后面
+        this.widgets.splice(idxIndex + 1, 0, itemNameWidget, promptWidget);
+      }
 
       // 动态将 group_name 转换为 combo 类型，以便在节点上原生显示左右小箭头
       const gWidget = this.widgets?.find((w) => w.name === "group_name");
@@ -541,7 +578,7 @@ app.registerExtension({
             
             const it = items[idx];
             if (it) {
-              applyPreviewToNode(this, it.image || null, it.prompt_clean || "");
+              applyPreviewToNode(this, it.image || null, it.prompt_clean || "", it.item_name || "");
             }
           } catch (e) {
             console.error("PIM load_browser refresh error:", e);

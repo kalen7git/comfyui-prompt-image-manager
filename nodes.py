@@ -242,6 +242,7 @@ class PromptImageGroupLoadItem:
                     }
                 ],
                 "text": [prompt],
+                "item_name": [it.get("item_name") or ""],
             },
             "result": (prompt, image_tensor),
         }
