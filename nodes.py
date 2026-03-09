@@ -181,9 +181,13 @@ class PromptImageGroupSave:
 class PromptImageGroupLoadItem:
     @classmethod
     def INPUT_TYPES(cls):
+        from .storage import list_groups
+        groups = list_groups()
+        if not groups:
+            groups = ["default"]
         return {
             "required": {
-                "group_name": ("STRING", {"default": "default"}),
+                "group_name": (groups,),
                 "item_index": ("INT", {"default": 0, "min": 0, "max": 499, "step": 1}),
             }
         }

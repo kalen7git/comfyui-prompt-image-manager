@@ -491,6 +491,20 @@ app.registerExtension({
         hideOnZoom: false,
       });
 
+      // 动态将 group_name 转换为 combo 类型，以便在节点上原生显示左右小箭头
+      const gWidget = this.widgets?.find((w) => w.name === "group_name");
+      if (gWidget) {
+        gWidget.type = "combo";
+        gWidget.options = gWidget.options || {};
+        gWidget.options.values = [gWidget.value];
+        // 异步拉取已有组别填充
+        jget(API_GROUPS).then(data => {
+          const groups = data.groups || [];
+          if (!groups.includes(gWidget.value)) groups.unshift(gWidget.value);
+          gWidget.options.values = groups;
+        }).catch(err => console.error("PIM load groups error:", err));
+      }
+
       this.addWidget("button", "Browse", "浏览提示词与图片", () => {
         openBrowser(this);
       });
@@ -500,10 +514,10 @@ app.registerExtension({
       const refreshPreview = () => {
         if (refreshTimer) clearTimeout(refreshTimer);
         refreshTimer = setTimeout(async () => {
-          const gWidget = this.widgets?.find((w) => w.name === "group_name");
-          const iWidget = this.widgets?.find((w) => w.name === "item_index");
-          const group = gWidget?.value || "default";
-          const idxValue = parseInt(iWidget?.value || 0, 10);
+          const gW = this.widgets?.find((w) => w.name === "group_name");
+          const iW = this.widgets?.find((w) => w.name === "item_index");
+          const group = gW?.value || "default";
+          const idxValue = parseInt(iW?.value || 0, 10);
 
           try {
             const data = await jget(API_GROUP(group));
@@ -523,14 +537,22 @@ app.registerExtension({
         }, 300);
       };
 
+      const theNode = this;
       // 延迟挂载 callback 拦截，确保 widget 已初始化完毕
       setTimeout(() => {
         const triggers = ["group_name", "item_index"];
-        for (const w of this.widgets || []) {
+        for (const w of theNode.widgets || []) {
           if (triggers.includes(w.name)) {
             const orig = w.callback;
             w.callback = function () {
               const r = orig ? orig.apply(this, arguments) : undefined;
+              // 如果是切换组名，则自动将序号重置为 0
+              if (w.name === "group_name") {
+                 const idW = theNode.widgets?.find(x => x.name === "item_index");
+                 if (idW && idW.value !== 0) {
+                     idW.value = 0;
+                 }
+              }
               refreshPreview();
               return r;
             };
