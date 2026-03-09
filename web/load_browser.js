@@ -495,6 +495,49 @@ app.registerExtension({
         openBrowser(this);
       });
 
+      // 监听 group_name 或 item_index 改变，自动刷新预览
+      let refreshTimer = null;
+      const refreshPreview = () => {
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(async () => {
+          const gWidget = this.widgets?.find((w) => w.name === "group_name");
+          const iWidget = this.widgets?.find((w) => w.name === "item_index");
+          const group = gWidget?.value || "default";
+          const idxValue = parseInt(iWidget?.value || 0, 10);
+
+          try {
+            const data = await jget(API_GROUP(group));
+            const items = data.items || [];
+            if (items.length === 0) {
+              applyPreviewToNode(this, null, "(空分组)");
+              return;
+            }
+            const idx = Math.max(0, Math.min(idxValue, items.length - 1));
+            const it = items[idx];
+            if (it) {
+              applyPreviewToNode(this, it.image || null, it.prompt_clean || "");
+            }
+          } catch (e) {
+            console.error("PIM load_browser refresh error:", e);
+          }
+        }, 300);
+      };
+
+      // 延迟挂载 callback 拦截，确保 widget 已初始化完毕
+      setTimeout(() => {
+        const triggers = ["group_name", "item_index"];
+        for (const w of this.widgets || []) {
+          if (triggers.includes(w.name)) {
+            const orig = w.callback;
+            w.callback = function () {
+              const r = orig ? orig.apply(this, arguments) : undefined;
+              refreshPreview();
+              return r;
+            };
+          }
+        }
+      }, 100);
+
       return r;
     };
   },
