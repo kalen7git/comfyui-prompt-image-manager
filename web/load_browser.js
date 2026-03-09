@@ -526,7 +526,19 @@ app.registerExtension({
               applyPreviewToNode(this, null, "(空分组)");
               return;
             }
-            const idx = Math.max(0, Math.min(idxValue, items.length - 1));
+            // 利用取模运算实现首尾循环，比如 -1 会变成 length - 1，length 会变成 0
+            let idx = idxValue;
+            if (idx >= items.length) {
+              idx = idx % items.length;
+            } else if (idx < 0) {
+              idx = (idx % items.length + items.length) % items.length;
+            }
+            
+            // 如果计算后的索引跟原始值不同，回写以保证前端显示循环后的值
+            if (idx !== idxValue && iW) {
+              iW.value = idx;
+            }
+            
             const it = items[idx];
             if (it) {
               applyPreviewToNode(this, it.image || null, it.prompt_clean || "");
