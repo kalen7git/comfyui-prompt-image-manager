@@ -13,14 +13,14 @@ function tryQueue() {
       app.queuePrompt(0, 1);
       return true;
     }
-  } catch {}
+  } catch { }
   try {
     const q = app?.ui?.queue;
     if (q && typeof q.click === "function") {
       q.click();
       return true;
     }
-  } catch {}
+  } catch { }
   return false;
 }
 
@@ -67,7 +67,12 @@ app.registerExtension({
           saveNow.options.hidden = true;
         }
 
-        this.addWidget("button", "Save", "保存", () => {
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "保存";
+        saveBtn.style.cssText = "font-size: 14px; font-weight: bold; margin: 4px 0; border-radius: 4px; border: 1px solid #48b; background: rgba(50, 160, 100, 0.8); color: #eee; cursor: pointer; padding: 8px; width: 100%; box-sizing: border-box;";
+        saveBtn.onmouseover = () => { saveBtn.style.background = "rgba(50, 160, 100, 1)"; };
+        saveBtn.onmouseout = () => { saveBtn.style.background = "rgba(50, 160, 100, 0.8)"; };
+        saveBtn.onclick = () => {
           // Prefer "commit save" without queuing the full graph.
           commitSave(this)
             .then(() => {
@@ -112,7 +117,8 @@ app.registerExtension({
                 // ignore
               }
             });
-        });
+        };
+        this.addDOMWidget("Save", "btn", saveBtn, { serialize: false, hideOnZoom: false });
       }
 
       return r;

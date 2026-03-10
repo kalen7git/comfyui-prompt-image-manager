@@ -542,28 +542,31 @@ app.registerExtension({
         }).catch(err => console.error("PIM load groups error:", err));
       }
 
-      this.addWidget("button", "CopyPrompt", "复制提示词", () => {
+      const copyBtn = document.createElement("button");
+      copyBtn.textContent = "复制提示词";
+      copyBtn.style.cssText = "font-size: 13px; font-weight: bold; margin: 4px 0; border-radius: 4px; border: 1px solid #666; background: rgba(90, 90, 90, 0.8); color: #eee; cursor: pointer; padding: 6px; width: 100%; box-sizing: border-box;";
+      copyBtn.onmouseover = () => { copyBtn.style.background = "rgba(110, 110, 110, 0.8)"; };
+      copyBtn.onmouseout = () => { copyBtn.style.background = "rgba(90, 90, 90, 0.8)"; };
+      copyBtn.onclick = () => {
         const text = this._pimTextEl?.textContent;
         if (!text) return;
         const trimmed = text.trim();
         if (trimmed === "" || trimmed === "（点击 Browse 选择提示词）" || trimmed === "(空分组)" || trimmed === "(空提示词)") return;
 
         navigator.clipboard.writeText(text).then(() => {
-          const btn = this.widgets?.find(w => w.name === "CopyPrompt");
-          if (btn) {
-            btn.label = "已复制！";
-            this.setDirtyCanvas(true, true);
-            setTimeout(() => {
-              btn.label = "复制提示词";
-              this.setDirtyCanvas(true, true);
-            }, 1000);
-          }
+          copyBtn.textContent = "已复制！";
+          setTimeout(() => { copyBtn.textContent = "复制提示词"; }, 1000);
         }).catch(err => console.error("复制失败:", err));
-      });
+      };
+      this.addDOMWidget("CopyPrompt", "btn", copyBtn, { serialize: false, hideOnZoom: false });
 
-      this.addWidget("button", "Browse", "浏览提示词与图片", () => {
-        openBrowser(this);
-      });
+      const browseBtn = document.createElement("button");
+      browseBtn.textContent = "浏览提示词与图片";
+      browseBtn.style.cssText = "font-size: 14px; font-weight: bold; margin: 4px 0; border-radius: 4px; border: 1px solid #48b; background: rgba(60, 110, 200, 0.8); color: #eee; cursor: pointer; padding: 8px; width: 100%; box-sizing: border-box;";
+      browseBtn.onmouseover = () => { browseBtn.style.background = "rgba(60, 110, 200, 1)"; };
+      browseBtn.onmouseout = () => { browseBtn.style.background = "rgba(60, 110, 200, 0.8)"; };
+      browseBtn.onclick = () => { openBrowser(this); };
+      this.addDOMWidget("Browse", "btn", browseBtn, { serialize: false, hideOnZoom: false });
 
       // 监听 group_name 或 item_index 改变，自动刷新预览
       let refreshTimer = null;
