@@ -73,6 +73,29 @@ app.registerExtension({
         saveBtn.onmouseover = () => { saveBtn.style.background = "rgba(50, 160, 100, 1)"; };
         saveBtn.onmouseout = () => { saveBtn.style.background = "rgba(50, 160, 100, 0.8)"; };
         saveBtn.onclick = () => {
+          const promptVal = findWidget(this, "提示词内容")?.value;
+          if (!promptVal || String(promptVal).trim() === "") {
+            try {
+              const toast = app?.extensionManager?.toast;
+              const msg = "提示词内容为空，请输入要保存的提示词。";
+              if (toast?.add) {
+                toast.add({
+                  severity: "warn",
+                  summary: "提示词图片管理器",
+                  detail: msg,
+                  life: 4000,
+                });
+              } else if (toast?.addAlert) {
+                toast.addAlert("提示词图片管理器: " + msg);
+              } else if (typeof console !== "undefined") {
+                console.warn(msg);
+              }
+            } catch {
+              // ignore UI errors
+            }
+            return;
+          }
+
           // Prefer "commit save" without queuing the full graph.
           commitSave(this)
             .then(() => {
@@ -97,10 +120,7 @@ app.registerExtension({
               // 提示需要先执行一次节点生成预览图
               try {
                 const toast = app?.extensionManager?.toast;
-                const msg =
-                  "保存失败：" +
-                  (e?.message || "") +
-                  "。请先运行一次该节点生成预览图，然后再点击 Save。";
+                const msg = "保存失败：" + (e?.message || "未知错误");
                 if (toast?.add) {
                   toast.add({
                     severity: "warn",

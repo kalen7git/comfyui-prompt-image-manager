@@ -82,17 +82,19 @@ def _register_routes() -> None:
 
         info = nodes._LAST_PREVIEW_BY_UID.get(uid)
         if not info:
-            return web.json_response({"ok": False, "error": "no_preview_yet"}, status=409)
+            return web.json_response({"ok": False, "error": "请先运行一次该节点生成预览图，然后再点击保存。"}, status=409)
 
         abs_src = info.get("abs_path") or ""
         if not abs_src or not os.path.exists(abs_src):
-            return web.json_response({"ok": False, "error": "preview_missing"}, status=409)
+            return web.json_response({"ok": False, "error": "未找到图片信息，请先运行生成预览图。"}, status=409)
 
         group = storage._safe_name(str(payload.get("group_name") or "默认分组"))
         item_name = str(payload.get("item_name") or "").strip()
         item = storage._safe_name(item_name) if item_name else ""
         prompt_text = (payload.get("prompt_text") or "")
         prompt_final = str(prompt_text).strip()
+        if not prompt_final:
+            return web.json_response({"ok": False, "error": "提示词内容为空，请输入要保存的提示词。"}, status=400)
         filename_pattern = str(payload.get("filename_pattern") or "").strip()
 
         # Compute index for {index} variable
