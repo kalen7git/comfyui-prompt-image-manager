@@ -88,7 +88,7 @@ def _register_routes() -> None:
         if not abs_src or not os.path.exists(abs_src):
             return web.json_response({"ok": False, "error": "preview_missing"}, status=409)
 
-        group = storage._safe_name(str(payload.get("group_name") or "default"))
+        group = storage._safe_name(str(payload.get("group_name") or "默认分组"))
         item_name = str(payload.get("item_name") or "").strip()
         item = storage._safe_name(item_name) if item_name else ""
         prompt_text = (payload.get("prompt_text") or "")

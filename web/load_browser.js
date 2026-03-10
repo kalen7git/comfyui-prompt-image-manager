@@ -263,7 +263,7 @@ function openBrowser(node) {
         onclick: () => {
           const g = findWidget(node, "分组名称");
           const idxWidget = findWidget(node, "记录索引");
-          if (g) g.value = currentGroup || "default";
+          if (g) g.value = currentGroup || "默认分组";
           if (idxWidget) idxWidget.value = idx;
 
           // 直接使用当前已加载的数据在节点上显示预览
@@ -575,7 +575,7 @@ app.registerExtension({
         refreshTimer = setTimeout(async () => {
           const gW = this.widgets?.find((w) => w.name === "分组名称");
           const iW = this.widgets?.find((w) => w.name === "记录索引");
-          const group = gW?.value || "default";
+          const group = gW?.value || "默认分组";
           const idxValue = parseInt(iW?.value || 0, 10);
 
           try {

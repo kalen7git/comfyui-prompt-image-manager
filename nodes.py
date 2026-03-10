@@ -78,7 +78,7 @@ def _resolve_saved_image_path(filename: str, subfolder: str, t: str) -> str:
     return os.path.join(base, subfolder or "", filename)
 
 
-def _save_output_image(pil: "Image.Image", base_name: str, group: str = "default", item: str = "", index: int = 0) -> Tuple[str, str, str]:
+def _save_output_image(pil: "Image.Image", base_name: str, group: str = "默认分组", item: str = "", index: int = 0) -> Tuple[str, str, str]:
     """
     Returns (filename, subfolder, type) suitable for ComfyUI /view.
     """
@@ -120,9 +120,9 @@ class PromptImageGroupSave:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "分组名称": ("STRING", {"default": "default"}),
+                "分组名称": ("STRING", {"default": "默认分组"}),
                 "项目名称": ("STRING", {"default": ""}),
-                "命名格式": ("STRING", {"default": "{group}_{item}_{date}_{time}"}),
+                "命名格式": ("STRING", {"default": "{分组}_{项目}_{日期}_{时间}"}),
                 "提示词内容": ("STRING", {"multiline": True, "default": ""}),
                 "图片": ("IMAGE",),
             },
@@ -143,7 +143,7 @@ class PromptImageGroupSave:
         提示词内容: str,
         图片,
         项目名称: str = "",
-        命名格式: str = "{group}_{item}_{date}_{time}",
+        命名格式: str = "{分组}_{项目}_{日期}_{时间}",
         unique_id: str = "",
     ) -> dict:
         group_name = 分组名称
@@ -189,7 +189,7 @@ class PromptImageGroupLoadItem:
         from .storage import list_groups
         groups = list_groups()
         if not groups:
-            groups = ["default"]
+            groups = ["默认分组"]
         return {
             "required": {
                 "分组名称": (groups,),

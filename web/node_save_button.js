@@ -82,12 +82,12 @@ app.registerExtension({
                 if (toast?.add) {
                   toast.add({
                     severity: "success",
-                    summary: "Prompt Image Manager",
+                    summary: "提示词图片管理器",
                     detail: "已保存当前提示词与图片。",
                     life: 3000,
                   });
                 } else if (toast?.addAlert) {
-                  toast.addAlert("Prompt Image Manager: 已保存当前提示词与图片。");
+                  toast.addAlert("提示词图片管理器: 已保存当前提示词与图片。");
                 }
               } catch {
                 // ignore UI errors
@@ -104,12 +104,12 @@ app.registerExtension({
                 if (toast?.add) {
                   toast.add({
                     severity: "warn",
-                    summary: "Prompt Image Manager",
+                    summary: "提示词图片管理器",
                     detail: msg,
                     life: 4000,
                   });
                 } else if (toast?.addAlert) {
-                  toast.addAlert("Prompt Image Manager: " + msg);
+                  toast.addAlert("提示词图片管理器: " + msg);
                 } else if (typeof console !== "undefined") {
                   console.warn(msg);
                 }

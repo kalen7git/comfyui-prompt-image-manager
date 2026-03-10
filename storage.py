@@ -24,12 +24,12 @@ def _safe_name(name: str) -> str:
     name = (name or "").strip()
     name = re.sub(r"[^\w\-\.\s\u4e00-\u9fff]", "_", name, flags=re.UNICODE)
     name = re.sub(r"\s+", " ", name).strip()
-    return name or "default"
+    return name or "默认分组"
 
 
 def expand_filename_pattern(
     pattern: str,
-    group: str = "default",
+    group: str = "默认分组",
     item: str = "",
     index: int = 0,
 ) -> str:
@@ -50,7 +50,7 @@ def expand_filename_pattern(
 
     pattern = (pattern or "").strip()
     if not pattern:
-        pattern = "{group}_{item}_{date}_{time}"
+        pattern = "{分组}_{项目}_{日期}_{时间}"
 
     # If no template variables detected, treat as plain prefix (backward compat)
     if "{" not in pattern:
@@ -68,6 +68,12 @@ def expand_filename_pattern(
         "time": now.strftime("%H-%M-%S"),
         "ts": str(ts),
         "index": f"{index:03d}",
+        "分组": _safe_name(group),
+        "项目": _safe_name(item) if item else "",
+        "日期": now.strftime("%Y-%m-%d"),
+        "时间": now.strftime("%H-%M-%S"),
+        "时间戳": str(ts),
+        "序号": f"{index:03d}",
     }
 
     result = pattern
@@ -80,7 +86,7 @@ def expand_filename_pattern(
     result = re.sub(r"_{2,}", "_", result)
     result = result.strip("_")
     
-    return result or "default"
+    return result or "默认分组"
 
 
 def _output_dir() -> str:
