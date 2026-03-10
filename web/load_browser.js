@@ -511,7 +511,7 @@ app.registerExtension({
         "font: 11px/1.5 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;" +
         "color:#ddd; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12);" +
         "border-radius:6px; padding:6px; min-height:40px; max-height:150px;";
-      textEl.textContent = "（点击 Browse 选择提示词）";
+      textEl.textContent = "（点击浏览选择提示词）";
       this._pimTextEl = textEl;
       const promptWidget = this.addDOMWidget("prompt_preview", "customtext", textEl, {
         serialize: false,
@@ -551,7 +551,7 @@ app.registerExtension({
         const text = this._pimTextEl?.textContent;
         if (!text) return;
         const trimmed = text.trim();
-        if (trimmed === "" || trimmed === "（点击 Browse 选择提示词）" || trimmed === "(空分组)" || trimmed === "(空提示词)") return;
+        if (trimmed === "" || trimmed === "（点击浏览选择提示词）" || trimmed === "(空分组)" || trimmed === "(空提示词)") return;
 
         navigator.clipboard.writeText(text).then(() => {
           copyBtn.textContent = "已复制！";
