@@ -120,11 +120,11 @@ class PromptImageGroupSave:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "group_name": ("STRING", {"default": "default"}),
-                "item_name": ("STRING", {"default": ""}),
-                "filename_pattern": ("STRING", {"default": "{group}_{item}_{date}_{time}"}),
-                "prompt_text": ("STRING", {"multiline": True, "default": ""}),
-                "image": ("IMAGE",),
+                "分组名称": ("STRING", {"default": "default"}),
+                "项目名称": ("STRING", {"default": ""}),
+                "命名格式": ("STRING", {"default": "{group}_{item}_{date}_{time}"}),
+                "提示词内容": ("STRING", {"multiline": True, "default": ""}),
+                "图片": ("IMAGE",),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -134,18 +134,23 @@ class PromptImageGroupSave:
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "save"
-    CATEGORY = "Prompt Image Manager"
+    CATEGORY = "提示词图片管理器"
     OUTPUT_NODE = True
 
     def save(
         self,
-        group_name: str,
-        prompt_text: str,
-        image,
-        item_name: str = "",
-        filename_pattern: str = "{group}_{item}_{date}_{time}",
+        分组名称: str,
+        提示词内容: str,
+        图片,
+        项目名称: str = "",
+        命名格式: str = "{group}_{item}_{date}_{time}",
         unique_id: str = "",
     ) -> dict:
+        group_name = 分组名称
+        prompt_text = 提示词内容
+        image = 图片
+        item_name = 项目名称
+        filename_pattern = 命名格式
         group = _safe_name(group_name)
         item = _safe_name(item_name) if item_name else ""
         # Text is fully user-provided; do not auto-clean/modify.
@@ -187,18 +192,20 @@ class PromptImageGroupLoadItem:
             groups = ["default"]
         return {
             "required": {
-                "group_name": (groups,),
-                "item_index": ("INT", {"default": 0, "min": 0, "max": 499, "step": 1}),
+                "分组名称": (groups,),
+                "记录索引": ("INT", {"default": 0, "min": 0, "max": 499, "step": 1}),
             }
         }
 
     RETURN_TYPES = ("STRING", "IMAGE")
-    RETURN_NAMES = ("prompt_text", "image")
+    RETURN_NAMES = ("提示词", "图片")
     FUNCTION = "load"
-    CATEGORY = "Prompt Image Manager"
+    CATEGORY = "提示词图片管理器"
     OUTPUT_NODE = True
 
-    def load(self, group_name: str, item_index: int) -> Tuple[str, object]:
+    def load(self, 分组名称: str, 记录索引: int) -> Tuple[str, object]:
+        group_name = 分组名称
+        item_index = 记录索引
         from .storage import get_group, _safe_name
 
         if Image is None:
@@ -249,12 +256,12 @@ class PromptImageGroupLoadItem:
 
 
 NODE_CLASS_MAPPINGS: Dict[str, object] = {
-    "PromptImageGroupSave": PromptImageGroupSave,
-    "PromptImageGroupLoadItem": PromptImageGroupLoadItem,
+    "提示词组保存": PromptImageGroupSave,
+    "提示词组加载项": PromptImageGroupLoadItem,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS: Dict[str, str] = {
-    "PromptImageGroupSave": "Prompt Group Save (text+image)",
-    "PromptImageGroupLoadItem": "Prompt Group Load Item (prompt+image)",
+    "提示词组保存": "提示词组保存 (文本+图片)",
+    "提示词组加载项": "提示词组加载项 (提示词+图片)",
 }
 

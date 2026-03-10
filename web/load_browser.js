@@ -216,7 +216,7 @@ function openBrowser(node) {
   const header = el(
     "div",
     { class: "pim-load-header" },
-    el("div", { class: "pim-load-title" }, "Prompt Group Browser"),
+    el("div", { class: "pim-load-title" }, "提示词组浏览器"),
     el(
       "button",
       {
@@ -261,8 +261,8 @@ function openBrowser(node) {
       {
         class: "pim-load-btn",
         onclick: () => {
-          const g = findWidget(node, "group_name");
-          const idxWidget = findWidget(node, "item_index");
+          const g = findWidget(node, "分组名称");
+          const idxWidget = findWidget(node, "记录索引");
           if (g) g.value = currentGroup || "default";
           if (idxWidget) idxWidget.value = idx;
 
@@ -447,7 +447,7 @@ function openBrowser(node) {
     });
 
     // 默认选中当前节点 group_name 对应的组，否则选第一个
-    const currentGroupWidget = findWidget(node, "group_name");
+    const currentGroupWidget = findWidget(node, "分组名称");
     const prefer = currentGroupWidget?.value || null;
     const toSelect = prefer && groups.includes(prefer) ? prefer : groups[0];
     const targetBtn = Array.from(groupsCol.querySelectorAll(".pim-load-group-btn")).find(
@@ -466,7 +466,7 @@ function openBrowser(node) {
 app.registerExtension({
   name: "prompt_image_manager.load_browser",
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData?.name !== "PromptImageGroupLoadItem") return;
+    if (nodeData?.name !== "提示词组加载项") return;
 
     // 挂载 onExecuted 钩子：工作流执行完后显示图片和提示词
     const onExecuted = nodeType.prototype.onExecuted;
@@ -518,9 +518,9 @@ app.registerExtension({
         hideOnZoom: false,
       });
 
-      // 调整顺序：将 item_name_display 和 prompt_preview 放到最前面原生控件 （比如 item_index）下面。
-      // ComfyUI默认将addDOMWidget放至widgets数组最后。如果要在item_index下，可以把它们移至 item_index 的后面。
-      const idxIndex = this.widgets?.findIndex(w => w.name === "item_index") ?? -1;
+      // 调整顺序：将 item_name_display 和 prompt_preview 放到最前面原生控件 （比如 记录索引）下面。
+      // ComfyUI默认将addDOMWidget放至widgets数组最后。如果要在记录索引下，可以把它们移至 记录索引 的后面。
+      const idxIndex = this.widgets?.findIndex(w => w.name === "记录索引") ?? -1;
       if (idxIndex >= 0 && this.widgets) {
         // 先移除新添加的两个
         this.widgets = this.widgets.filter(w => w.name !== "item_name_display" && w.name !== "prompt_preview");
@@ -529,7 +529,7 @@ app.registerExtension({
       }
 
       // 动态将 group_name 转换为 combo 类型，以便在节点上原生显示左右小箭头
-      const gWidget = this.widgets?.find((w) => w.name === "group_name");
+      const gWidget = this.widgets?.find((w) => w.name === "分组名称");
       if (gWidget) {
         gWidget.type = "combo";
         gWidget.options = gWidget.options || {};
@@ -573,8 +573,8 @@ app.registerExtension({
       const refreshPreview = () => {
         if (refreshTimer) clearTimeout(refreshTimer);
         refreshTimer = setTimeout(async () => {
-          const gW = this.widgets?.find((w) => w.name === "group_name");
-          const iW = this.widgets?.find((w) => w.name === "item_index");
+          const gW = this.widgets?.find((w) => w.name === "分组名称");
+          const iW = this.widgets?.find((w) => w.name === "记录索引");
           const group = gW?.value || "default";
           const idxValue = parseInt(iW?.value || 0, 10);
 
@@ -611,15 +611,15 @@ app.registerExtension({
       const theNode = this;
       // 延迟挂载 callback 拦截，确保 widget 已初始化完毕
       setTimeout(() => {
-        const triggers = ["group_name", "item_index"];
+        const triggers = ["分组名称", "记录索引"];
         for (const w of theNode.widgets || []) {
           if (triggers.includes(w.name)) {
             const orig = w.callback;
             w.callback = function () {
               const r = orig ? orig.apply(this, arguments) : undefined;
               // 如果是切换组名，则自动将序号重置为 0
-              if (w.name === "group_name") {
-                const idW = theNode.widgets?.find(x => x.name === "item_index");
+              if (w.name === "分组名称") {
+                const idW = theNode.widgets?.find(x => x.name === "记录索引");
                 if (idW && idW.value !== 0) {
                   idW.value = 0;
                 }

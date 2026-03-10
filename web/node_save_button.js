@@ -25,10 +25,10 @@ function tryQueue() {
 }
 
 async function commitSave(node) {
-  const group = findWidget(node, "group_name")?.value ?? "default";
-  const itemName = findWidget(node, "item_name")?.value ?? "";
-  const prompt = findWidget(node, "prompt_text")?.value ?? "";
-  const fnPattern = findWidget(node, "filename_pattern")?.value ?? "";
+  const group = findWidget(node, "分组名称")?.value ?? "default";
+  const itemName = findWidget(node, "项目名称")?.value ?? "";
+  const prompt = findWidget(node, "提示词内容")?.value ?? "";
+  const fnPattern = findWidget(node, "命名格式")?.value ?? "";
   const payload = {
     unique_id: String(node.id ?? ""),
     group_name: String(group ?? ""),
@@ -52,7 +52,7 @@ async function commitSave(node) {
 app.registerExtension({
   name: "prompt_image_manager.save_button",
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    const isSave = nodeData?.name === "PromptImageGroupSave";
+    const isSave = nodeData?.name === "提示词组保存";
     if (!isSave) return;
 
     const orig = nodeType.prototype.onNodeCreated;
