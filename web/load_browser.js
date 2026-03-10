@@ -542,6 +542,25 @@ app.registerExtension({
         }).catch(err => console.error("PIM load groups error:", err));
       }
 
+      this.addWidget("button", "CopyPrompt", "复制提示词", () => {
+        const text = this._pimTextEl?.textContent;
+        if (!text) return;
+        const trimmed = text.trim();
+        if (trimmed === "" || trimmed === "（点击 Browse 选择提示词）" || trimmed === "(空分组)" || trimmed === "(空提示词)") return;
+
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = this.widgets?.find(w => w.name === "CopyPrompt");
+          if (btn) {
+            btn.label = "已复制！";
+            this.setDirtyCanvas(true, true);
+            setTimeout(() => {
+              btn.label = "复制提示词";
+              this.setDirtyCanvas(true, true);
+            }, 1000);
+          }
+        }).catch(err => console.error("复制失败:", err));
+      });
+
       this.addWidget("button", "Browse", "浏览提示词与图片", () => {
         openBrowser(this);
       });
@@ -570,12 +589,12 @@ app.registerExtension({
             } else if (idx < 0) {
               idx = (idx % items.length + items.length) % items.length;
             }
-            
+
             // 如果计算后的索引跟原始值不同，回写以保证前端显示循环后的值
             if (idx !== idxValue && iW) {
               iW.value = idx;
             }
-            
+
             const it = items[idx];
             if (it) {
               applyPreviewToNode(this, it.image || null, it.prompt_clean || "", it.item_name || "");
@@ -597,10 +616,10 @@ app.registerExtension({
               const r = orig ? orig.apply(this, arguments) : undefined;
               // 如果是切换组名，则自动将序号重置为 0
               if (w.name === "group_name") {
-                 const idW = theNode.widgets?.find(x => x.name === "item_index");
-                 if (idW && idW.value !== 0) {
-                     idW.value = 0;
-                 }
+                const idW = theNode.widgets?.find(x => x.name === "item_index");
+                if (idW && idW.value !== 0) {
+                  idW.value = 0;
+                }
               }
               refreshPreview();
               return r;
