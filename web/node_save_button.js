@@ -67,46 +67,6 @@ app.registerExtension({
           saveNow.options.hidden = true;
         }
 
-        const promptWidget = findWidget(this, "提示词内容");
-        if (promptWidget) {
-          if (promptWidget.inputEl) {
-            promptWidget.inputEl.style.minHeight = "120px";
-            promptWidget.inputEl.style.height = "120px";
-          }
-
-          // 当节点整体发生缩放/拉伸时回调
-          const origOnResize = this.onResize;
-          this.onResize = function (size) {
-            if (origOnResize) origOnResize.apply(this, arguments);
-            // 给 LiteGraph 留一点余量计算最新布局
-            setTimeout(() => {
-              if (!promptWidget.inputEl) return;
-              // 计算所有前面小部件叠加起来的高度的粗略估值
-              // 每个标准输入挂件通常大约是 20-30 像素左右，加上一些边距
-              let fixedHeight = 0;
-              for (const w of this.widgets) {
-                if (w === promptWidget) break; // 遇到自己跳出
-                fixedHeight += w.computeSize ? w.computeSize(size[0])[1] : 26;
-                fixedHeight += 12; // widget margin
-              }
-              // 加上顶部标题栏与下方按钮留白
-              fixedHeight += 40 /* title */ + 70 /* bot btn */;
-
-              const newHeight = Math.max(120, size[1] - fixedHeight);
-              promptWidget.inputEl.style.height = `${newHeight}px`;
-            }, 0);
-          };
-
-          // 延迟一帧让DOM更新后重新计算节点大小（初始放大）
-          requestAnimationFrame(() => {
-            const sz = this.computeSize();
-            if (sz[0] > this.size[0] || Math.max(120, sz[1]) > this.size[1]) {
-              this.setSize([Math.max(sz[0], this.size[0]), Math.max(120 + 200, sz[1])]);
-            }
-            this.setDirtyCanvas(true, true);
-          });
-        }
-
         const saveBtn = document.createElement("button");
         saveBtn.textContent = "保存";
         saveBtn.style.cssText = "font-size: 14px; font-weight: bold; margin: 4px 0; border-radius: 4px; border: 1px solid #48b; background: rgba(50, 160, 100, 0.8); color: #eee; cursor: pointer; padding: 8px; width: 100%; box-sizing: border-box;";
