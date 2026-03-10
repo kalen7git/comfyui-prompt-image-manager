@@ -203,7 +203,7 @@ class PromptImageGroupLoadItem:
     CATEGORY = "提示词图片管理器"
     OUTPUT_NODE = True
 
-    def load(self, 分组名称: str, 记录索引: int) -> Tuple[str, object]:
+    def load(self, 分组名称: str, 记录索引: int) -> dict:
         group_name = 分组名称
         item_index = 记录索引
         from .storage import get_group, _safe_name
@@ -214,30 +214,30 @@ class PromptImageGroupLoadItem:
         g = _safe_name(group_name)
         data = get_group(g)
         items = data.get("items") or []
-        if not items:
-            # empty: return blank values
-            if torch is None:
-                return ("", None)
-            blank = torch.zeros((1, 64, 64, 3), dtype=torch.float32)
-            return ("", blank)
-
-        idx = max(0, min(int(item_index), len(items) - 1))
-        it = items[idx] or {}
+        
+        idx = max(0, min(int(item_index), len(items) - 1)) if items else 0
+        it = items[idx] if items else {}
+        
         img = (it.get("image") or {})
         filename = img.get("filename") or ""
         subfolder = img.get("subfolder") or SUBFOLDER
         t = img.get("type") or "output"
+        prompt = it.get("prompt_clean") or ""
+        item_name = it.get("item_name") or ""
 
-        abs_path = _resolve_saved_image_path(filename, subfolder, t)
+        abs_path = _resolve_saved_image_path(filename, subfolder, t) if filename else ""
         if not filename or not os.path.exists(abs_path):
-            if torch is None:
-                return (it.get("prompt_clean") or "", None)
-            blank = torch.zeros((1, 64, 64, 3), dtype=torch.float32)
-            return (it.get("prompt_clean") or "", blank)
+            img_val = None if torch is None else torch.zeros((1, 64, 64, 3), dtype=torch.float32)
+            return {
+                "ui": {
+                    "text": [prompt],
+                    "item_name": [item_name],
+                },
+                "result": (prompt, img_val),
+            }
 
         pil = Image.open(abs_path)
         image_tensor = _pil_to_tensor(pil)
-        prompt = it.get("prompt_clean") or ""
         
         return {
             "ui": {

@@ -188,6 +188,9 @@ function applyPreviewToNode(node, imageInfo, promptText, itemName = null) {
       });
     };
     img.src = viewUrl(imageInfo);
+  } else {
+    node.imgs = undefined;
+    node.setDirtyCanvas(true, true);
   }
 
   // --- Item Name 文本 ---
@@ -251,10 +254,12 @@ function openBrowser(node) {
     const img = it.image || {};
     const prompt = it.prompt_clean || "";
 
-    const imgEl = el("img", {
-      class: "pim-load-preview-img",
-      src: viewUrl(img),
-    });
+    const imgEl = img.filename
+      ? el("img", {
+        class: "pim-load-preview-img",
+        src: viewUrl(img),
+      })
+      : el("div", { class: "pim-load-empty", style: "border:1px solid rgba(255,255,255,0.18); padding:20px; text-align:center; border-radius:8px; margin-bottom:8px;" }, "（无图片）");
     const promptBox = el("div", { class: "pim-load-preview-text" }, prompt || "(空提示词)");
     const useBtn = el(
       "button",
