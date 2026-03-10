@@ -131,8 +131,8 @@ class PromptImageGroupSave:
             },
         }
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("prompt_text", "saved_image_path")
+    RETURN_TYPES = ()
+    RETURN_NAMES = ()
     FUNCTION = "save"
     CATEGORY = "Prompt Image Manager"
     OUTPUT_NODE = True
@@ -145,7 +145,7 @@ class PromptImageGroupSave:
         item_name: str = "",
         filename_pattern: str = "{group}_{item}_{date}_{time}",
         unique_id: str = "",
-    ) -> Tuple[str, str]:
+    ) -> dict:
         group = _safe_name(group_name)
         item = _safe_name(item_name) if item_name else ""
         # Text is fully user-provided; do not auto-clean/modify.
@@ -174,7 +174,7 @@ class PromptImageGroupSave:
                     }
                 ],
             },
-            "result": (prompt_final, view_path),
+            "result": (),
         }
 
 
