@@ -1,4 +1,4 @@
-# ComfyUI Prompt Image Manager
+# ComfyUI Prompt Image Manager (提示词图片管理器)
 
 [English](./README_EN.md) | [中文](./README.md)
 
