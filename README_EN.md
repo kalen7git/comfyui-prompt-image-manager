@@ -13,7 +13,7 @@ This plugin provides two core nodes and an independent interactive panel.
 **Function**: At the end of the image generation workflow, pairs the generated image with the final prompt and saves them into a specified **Group**.
 This is an output node. It displays the generated preview image on the ComfyUI interface and supports custom filename formatting.
 
-<img src="https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3" width="70%" alt="Prompt Group Save">
+<img src="https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3" width="50%" alt="Prompt Group Save">
 
 **Input Parameters**:
 - `分组名称` (Group Name) (String): The name of the group to save to, e.g., "服装" (clothing) or "姿势" (poses). Images and prompts within the same group are gathered together for easy browsing. Default is "默认分组" (default group).
@@ -37,7 +37,7 @@ This is an output node. It displays the generated preview image on the ComfyUI i
 ### 2. 提示词组加载项 (提示词+图片) (Prompt Group Load Item (prompt+image))
 **Function**: Loads a historically saved prompt text and its corresponding image from a specified **Group** based on an index.
 
-<img src="https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a" width="70%" alt="Prompt Group Load Item">
+<img src="https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a" width="50%" alt="Prompt Group Load Item">
 
 **Input Parameters**:
 - `分组名称` (Group Name) (String): The name of the group to read from.

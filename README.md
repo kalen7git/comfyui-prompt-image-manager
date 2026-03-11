@@ -13,7 +13,7 @@
 **功能**：在图像生成流程的最后，将生成的图片和最终提示词配对保存到一个指定的**分组**中。
 此节点为输出节点，会在 ComfyUI 界面上显示生成的预览图，并支持自定义文件名格式。
 
-<img src="https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3" width="70%" alt="提示词分组保存">
+<img src="https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3" width="50%" alt="提示词分组保存">
 
 **输入参数**：
 - `分组名称` (字符串)：保存的分组名称，例如 "服装" 或 "姿势"。同一分组下的图片和提示词会聚集在一起，方便后续浏览。默认值为 "默认分组"。
@@ -37,7 +37,7 @@
 ### 2. 提示词组加载项 (提示词+图片)
 **功能**：从指定的**分组**中根据索引加载历史保存的提示词文本和对应的图片。
 
-<img src="https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a" width="70%" alt="提示词组加载项">
+<img src="https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a" width="50%" alt="提示词组加载项">
 
 **输入参数**：
 - `分组名称` (字符串)：需要读取的分组名称。
