@@ -13,7 +13,7 @@
 **功能**：在图像生成流程的最后，将生成的图片和最终提示词配对保存到一个指定的**分组**中。
 此节点为输出节点，会在 ComfyUI 界面上显示生成的预览图，并支持自定义文件名格式。
 
-![提示词分组保存](https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3)
+<img src="https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3" width="70%" alt="提示词分组保存">
 
 **输入参数**：
 - `分组名称` (字符串)：保存的分组名称，例如 "服装" 或 "姿势"。同一分组下的图片和提示词会聚集在一起，方便后续浏览。默认值为 "默认分组"。
@@ -37,7 +37,7 @@
 ### 2. 提示词组加载项 (提示词+图片)
 **功能**：从指定的**分组**中根据索引加载历史保存的提示词文本和对应的图片。
 
-![提示词组加载项](https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a)
+<img src="https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a" width="70%" alt="提示词组加载项">
 
 **输入参数**：
 - `分组名称` (字符串)：需要读取的分组名称。
@@ -52,7 +52,7 @@
 - **`复制 (Copy)` 按钮**：节点面板上提供复制按钮，一键将当前加载的历史提示词复制到系统剪贴板。
 - **`浏览 (Browse)` 按钮**：点击此按钮将打开一个强大的**可视化浏览器**弹窗：
 
-![提示词历史浏览器](https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2)
+<img src="https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2" width="70%" alt="提示词历史浏览器">
 
   - **左侧分组栏**：列出当前库中的所有的分组名，可以点击快速切换分组。
   - **中间记录栏**：列出当前分组下的所有历史记录（支持显示 `项目名称` 以及准确的保存时间）。
