@@ -139,6 +139,10 @@ app.registerExtension({
             });
         };
         this.addDOMWidget("Save", "btn", saveBtn, { serialize: false, hideOnZoom: false });
+
+        // 增加 4 个系统 widget 标准高度
+        const widgetHeight = globalThis.LiteGraph?.NODE_WIDGET_HEIGHT || 24;
+        this.setSize([this.size[0], this.size[1] + widgetHeight * 4]);
       }
 
       return r;
