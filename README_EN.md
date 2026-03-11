@@ -45,6 +45,7 @@ This is an output node. It displays the generated preview image on the ComfyUI i
 
 **Special UI Features (Prompt Group Browser Panel)**:
 - **Prompt Preview Area**: The node panel displays a text area showing the currently loaded prompt, and directly displays the loaded preview image on the node body.
+- **`Copy` Button**: A button directly on the node panel to easily copy the displayed prompt text to your system clipboard with one click.
 - **`Browse` Button**: Clicking this opens a powerful **visual browser (Prompt Group Browser)** dialog:
   - **Left Group Panel**: Lists all group names in the current database. Click to quickly switch groups.
   - **Middle Record Panel**: Lists all historical records in the current group (shows `item_name` and accurate save time).
