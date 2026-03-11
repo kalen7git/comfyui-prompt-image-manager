@@ -13,7 +13,7 @@ This plugin provides two core nodes and an independent interactive panel.
 **Function**: At the end of the image generation workflow, pairs the generated image with the final prompt and saves them into a specified **Group**.
 This is an output node. It displays the generated preview image on the ComfyUI interface and supports custom filename formatting.
 
-![Prompt Group Save](https://github.com/user-attachments/assets/affe66c0-fd34-40da-8987-f5ef0bd434c5)
+![Prompt Group Save](https://github.com/user-attachments/assets/9109c8a5-ca49-4586-86a0-0a47e2ef4ff3)
 
 **Input Parameters**:
 - `分组名称` (Group Name) (String): The name of the group to save to, e.g., "服装" (clothing) or "姿势" (poses). Images and prompts within the same group are gathered together for easy browsing. Default is "默认分组" (default group).
