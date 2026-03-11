@@ -37,6 +37,8 @@ This is an output node. It displays the generated preview image on the ComfyUI i
 ### 2. 提示词组加载项 (提示词+图片) (Prompt Group Load Item (prompt+image))
 **Function**: Loads a historically saved prompt text and its corresponding image from a specified **Group** based on an index.
 
+![Prompt Group Load Item](https://github.com/user-attachments/assets/c6c624d8-f374-45c4-b56c-40fa1bf4f57a)
+
 **Input Parameters**:
 - `分组名称` (Group Name) (String): The name of the group to read from.
 - `记录索引` (Item Index) (Integer): Read the Nth record in that group (0 is the first record, controlled by panel linkage).
