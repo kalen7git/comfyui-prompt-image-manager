@@ -52,7 +52,7 @@
 - **`复制 (Copy)` 按钮**：节点面板上提供复制按钮，一键将当前加载的历史提示词复制到系统剪贴板。
 - **`浏览 (Browse)` 按钮**：点击此按钮将打开一个强大的**可视化浏览器**弹窗：
 
-<img src="https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2" width="70%" alt="提示词历史浏览器">
+<img src="https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2" width="80%" alt="提示词历史浏览器">
 
   - **左侧分组栏**：列出当前库中的所有的分组名，可以点击快速切换分组。
   - **中间记录栏**：列出当前分组下的所有历史记录（支持显示 `项目名称` 以及准确的保存时间）。

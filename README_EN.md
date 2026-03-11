@@ -52,7 +52,7 @@ This is an output node. It displays the generated preview image on the ComfyUI i
 - **`复制 (Copy)` Button**: A button directly on the node panel to easily copy the displayed prompt text to your system clipboard with one click.
 - **`浏览 (Browse)` Button**: Clicking this opens a powerful **visual browser (Prompt Group Browser)** dialog:
 
-<img src="https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2" width="70%" alt="Prompt History Browser">
+<img src="https://github.com/user-attachments/assets/81793cb4-dec3-4c71-aee2-9c8622bad5b2" width="80%" alt="Prompt History Browser">
 
   - **Left Group Panel**: Lists all group names in the current database. Click to quickly switch groups.
   - **Middle Record Panel**: Lists all historical records in the current group (shows `项目名称` (Item Name) and accurate save time).
