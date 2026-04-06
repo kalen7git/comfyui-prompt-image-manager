@@ -361,7 +361,7 @@ function openBrowser(node) {
     previewCol.append(imgEl, el("div", { style: "margin-bottom:6px;" }, useBtn, copyBtn, delBtn), promptBox);
   }
 
-  async function loadGroup(name) {
+  async function loadGroup(name, initialIndex = 0) {
     currentGroup = name;
     selectedIndex = -1;
     itemsCol.innerHTML = "";
@@ -377,6 +377,15 @@ function openBrowser(node) {
       return;
     }
 
+    // 计算实际要选中的索引（循环处理越界）
+    let targetIdx = initialIndex || 0;
+    if (items.length > 0) {
+      targetIdx = ((targetIdx % items.length) + items.length) % items.length;
+    } else {
+      targetIdx = 0;
+    }
+
+    let targetRow = null;
     items.forEach((it, idx) => {
       let title = (it.prompt_clean || it.prompt_original || "").split(/\r?\n/)[0] || `(记录 ${idx})`;
       if (it.item_name) {
@@ -386,7 +395,7 @@ function openBrowser(node) {
       const row = el(
         "div",
         {
-          class: "pim-load-item" + (idx === 0 ? " active" : ""),
+          class: "pim-load-item" + (idx === targetIdx ? " active" : ""),
           onclick: () => {
             selectedIndex = idx;
             for (const item of itemsCol.querySelectorAll(".pim-load-item")) {
@@ -400,9 +409,16 @@ function openBrowser(node) {
         el("div", { class: "pim-load-item-sub" }, sub)
       );
       itemsCol.appendChild(row);
+      if (idx === targetIdx) targetRow = row;
     });
 
-    renderPreview(0);
+    selectedIndex = targetIdx;
+    renderPreview(targetIdx);
+
+    // 将选中条目滚动到列表可见区域
+    if (targetRow) {
+      requestAnimationFrame(() => targetRow.scrollIntoView({ block: "nearest" }));
+    }
   }
 
   async function init() {
@@ -451,17 +467,26 @@ function openBrowser(node) {
       groupsCol.appendChild(btn);
     });
 
-    // 默认选中当前节点 group_name 对应的组，否则选第一个
+    // 默认选中当前节点 group_name 和 记录索引 对应的组与条目，否则选第一个
     const currentGroupWidget = findWidget(node, "分组名称");
+    const currentIndexWidget = findWidget(node, "记录索引");
     const prefer = currentGroupWidget?.value || null;
+    const preferIndex = parseInt(currentIndexWidget?.value ?? 0, 10) || 0;
     const toSelect = prefer && groups.includes(prefer) ? prefer : groups[0];
+
+    // 高亮分组按钮
+    for (const b of groupsCol.querySelectorAll(".pim-load-group-btn")) {
+      b.classList.remove("active");
+    }
     const targetBtn = Array.from(groupsCol.querySelectorAll(".pim-load-group-btn")).find(
       (b) => b.textContent === toSelect
     );
     if (targetBtn) {
-      targetBtn.click();
+      targetBtn.classList.add("active");
+      await loadGroup(toSelect, preferIndex);
     } else if (firstBtn) {
-      firstBtn.click();
+      firstBtn.classList.add("active");
+      await loadGroup(groups[0], 0);
     }
   }
 
