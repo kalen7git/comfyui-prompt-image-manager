@@ -57,6 +57,9 @@ This is an output node. It displays the generated preview image on the ComfyUI i
   - **Left Group Panel**: Lists all group names in the current database. Click to quickly switch groups.
   - **Middle Record Panel**: Lists all historical records in the current group (shows `项目名称` (Item Name) and accurate save time).
   - **Right Preview Panel**: Displays the high-resolution image and full prompt text of the selected record.
+  - **Search**:
+    - **In-Group Search**: A search box at the top of the middle record panel allows real-time filtering of records within the current group. Matches against both `Prompt Text` and `Item Name`, with keyword highlighting and match statistics (e.g., `Found 3 / 15`).
+    - **Global Search**: Click the `全局` (Global) button next to the search box to switch to global search mode, searching across all groups. Results are displayed in sections by group, each with a group label header; group buttons in the left panel show match count badges. In global search mode, clicking a group button scrolls to that group's results without exiting the search.
   - **Action Buttons**:
     - `使用这一条（写入节点）` (Use this one (write to node)): Auto-fills the selected record's `分组名称` (Group Name) and `记录索引` (Item Index) into the node, and **updates the preview image and text on the ComfyUI canvas node in real-time** without re-running the workflow. What you see is what you get.
     - `复制提示词` (Copy Prompt): One-click copy of all prompt content of the record to the system clipboard.
