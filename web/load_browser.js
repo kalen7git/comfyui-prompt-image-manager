@@ -184,6 +184,63 @@ function ensureCss() {
   color: rgba(255,255,255,0.4);
   padding: 0 2px 4px;
 }
+.pim-search-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.pim-search-row .pim-search-wrap {
+  flex: 1;
+  margin-bottom: 0;
+}
+.pim-global-toggle {
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.pim-global-toggle:hover {
+  background: rgba(255,255,255,0.12);
+  color: #eee;
+}
+.pim-global-toggle.active {
+  background: rgba(120,170,255,0.25);
+  border-color: rgba(120,170,255,0.5);
+  color: #9cf;
+}
+.pim-global-group-label {
+  font-size: 10px;
+  color: rgba(120,170,255,0.85);
+  font-weight: 600;
+  padding: 6px 6px 2px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+.pim-global-group-label:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+.pim-group-badge {
+  display: inline-block;
+  min-width: 16px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 16px;
+  border-radius: 8px;
+  background: rgba(120,170,255,0.3);
+  color: #9cf;
+  margin-left: 6px;
+  padding: 0 4px;
+  float: right;
+}
 `;
   document.head.appendChild(style);
 }
@@ -287,6 +344,7 @@ function openBrowser(node) {
   const previewCol = el("div", { class: "pim-load-preview" });
 
   // --- 搜索框 ---
+  const searchRow = el("div", { class: "pim-search-row" });
   const searchWrap = el("div", { class: "pim-search-wrap" });
   const searchInput = el("input", {
     class: "pim-search-input",
@@ -295,9 +353,11 @@ function openBrowser(node) {
   });
   const searchClear = el("button", { class: "pim-search-clear", title: "清除搜索" }, "✕");
   searchWrap.append(searchInput, searchClear);
+  const globalToggle = el("button", { class: "pim-global-toggle", title: "全局搜索：跨所有分组搜索" }, "全局");
+  searchRow.append(searchWrap, globalToggle);
   const searchStats = el("div", { class: "pim-search-stats" });
   const itemsList = el("div", { style: "flex:1;overflow:auto;" });
-  itemsCol.append(searchWrap, searchStats, itemsList);
+  itemsCol.append(searchRow, searchStats, itemsList);
 
   body.append(groupsCol, itemsCol, previewCol);
   inner.append(header, body);
@@ -310,6 +370,9 @@ function openBrowser(node) {
   let filteredMap = [];    // filteredItems[i] 对应 currentItems 中的原始索引
   let selectedIndex = -1;
   let searchKeyword = "";
+  let isGlobalSearch = false;
+  let allGroupsCache = {};  // 全局搜索缓存: { groupName: [items...] }
+  let cachedGroupNames = [];  // 所有分组名
 
   /** 在文本中高亮关键词（返回 DOM 片段） */
   function highlightText(text, keyword) {
@@ -573,6 +636,146 @@ function openBrowser(node) {
     );
   }
 
+  /** 全局搜索：跨所有分组搜索 */
+  async function performGlobalSearch() {
+    const kw = searchKeyword.trim().toLowerCase();
+    itemsList.innerHTML = "";
+    searchStats.textContent = "";
+    previewCol.innerHTML = "";
+
+    if (!kw) {
+      // 无关键词时退回当前分组视图
+      if (currentGroup && currentItems.length) {
+        renderFilteredItems(0);
+      } else {
+        itemsList.appendChild(el("div", { class: "pim-load-empty" }, "请输入关键词进行全局搜索。"));
+      }
+      // 清除分组按钮上的 badge
+      for (const b of groupsCol.querySelectorAll(".pim-group-badge")) b.remove();
+      return;
+    }
+
+    itemsList.appendChild(el("div", { class: "pim-load-empty" }, "搜索中..."));
+
+    // 加载所有分组数据（有缓存则跳过）
+    try {
+      if (!cachedGroupNames.length) {
+        const gData = await jget(API_GROUPS);
+        cachedGroupNames = gData.groups || [];
+      }
+      const toFetch = cachedGroupNames.filter(g => !allGroupsCache[g]);
+      await Promise.all(toFetch.map(async (gName) => {
+        const d = await jget(API_GROUP(gName));
+        allGroupsCache[gName] = d.items || [];
+      }));
+    } catch (e) {
+      itemsList.innerHTML = "";
+      itemsList.appendChild(el("div", { class: "pim-load-empty" }, `加载失败：${e.message}`));
+      return;
+    }
+
+    itemsList.innerHTML = "";
+
+    // 收集所有匹配项
+    const globalResults = [];  // { group, idx, item }
+    const groupMatchCounts = {};  // 各分组匹配数
+    for (const gName of cachedGroupNames) {
+      const items = allGroupsCache[gName] || [];
+      items.forEach((it, idx) => {
+        const prompt = (it.prompt_clean || it.prompt_original || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        if (prompt.includes(kw) || name.includes(kw)) {
+          globalResults.push({ group: gName, idx, item: it });
+          groupMatchCounts[gName] = (groupMatchCounts[gName] || 0) + 1;
+        }
+      });
+    }
+
+    // 更新分组按钮上的匹配数 badge
+    for (const b of groupsCol.querySelectorAll(".pim-group-badge")) b.remove();
+    for (const btn of groupsCol.querySelectorAll(".pim-load-group-btn")) {
+      const gName = btn.textContent.replace(/\d+$/, "").trim();  // 粗略获取
+      const count = groupMatchCounts[btn._pimGroupName || ""];
+      if (count) {
+        const badge = el("span", { class: "pim-group-badge" }, String(count));
+        btn.appendChild(badge);
+      }
+    }
+
+    const totalMatched = globalResults.length;
+    const totalAll = Object.values(allGroupsCache).reduce((s, arr) => s + arr.length, 0);
+    searchStats.textContent = `全局：找到 ${totalMatched} / ${totalAll} 条（跨 ${Object.keys(groupMatchCounts).length} 个分组）`;
+
+    if (!globalResults.length) {
+      itemsList.appendChild(el("div", { class: "pim-load-empty" }, "所有分组中均没有匹配的记录。"));
+      previewCol.appendChild(el("div", { class: "pim-load-empty" }, "暂无可预览的图片。"));
+      return;
+    }
+
+    // 按分组分段渲染
+    let lastGroup = null;
+    let firstRow = null;
+    let firstResult = null;
+    globalResults.forEach((r, gIdx) => {
+      // 分组分隔标签
+      if (r.group !== lastGroup) {
+        lastGroup = r.group;
+        itemsList.appendChild(el("div", { class: "pim-global-group-label" }, `📁 ${r.group}`));
+      }
+
+      let title = (r.item.prompt_clean || r.item.prompt_original || "").split(/\r?\n/)[0] || `(记录 ${r.idx})`;
+      if (r.item.item_name) {
+        title = `[${r.item.item_name}] ${title}`;
+      }
+      const sub = new Date((r.item.ts || 0) * 1000).toLocaleString();
+
+      const titleEl = el("div", { class: "pim-load-item-title" });
+      titleEl.appendChild(highlightText(title, searchKeyword.trim()));
+
+      const row = el(
+        "div",
+        {
+          class: "pim-load-item" + (gIdx === 0 ? " active" : ""),
+          onclick: () => {
+            // 点击全局结果：更新预览
+            for (const item of itemsList.querySelectorAll(".pim-load-item")) {
+              item.classList.remove("active");
+            }
+            row.classList.add("active");
+            // 暂存到 currentItems/selectedIndex 以支持 renderPreview 和「使用这一条」
+            currentGroup = r.group;
+            currentItems = allGroupsCache[r.group] || [];
+            selectedIndex = r.idx;
+            renderPreview(r.idx);
+            // 高亮对应的分组按钮
+            for (const b of groupsCol.querySelectorAll(".pim-load-group-btn")) {
+              b.classList.toggle("active", (b._pimGroupName || "") === r.group);
+            }
+          },
+        },
+        titleEl,
+        el("div", { class: "pim-load-item-sub" }, sub)
+      );
+      itemsList.appendChild(row);
+      if (gIdx === 0) {
+        firstRow = row;
+        firstResult = r;
+      }
+    });
+
+    // 默认选中第一条全局结果
+    if (firstResult) {
+      currentGroup = firstResult.group;
+      currentItems = allGroupsCache[firstResult.group] || [];
+      selectedIndex = firstResult.idx;
+      renderPreview(firstResult.idx);
+      // 高亮分组按钮
+      for (const b of groupsCol.querySelectorAll(".pim-load-group-btn")) {
+        b.classList.toggle("active", (b._pimGroupName || "") === firstResult.group);
+      }
+    }
+  }
+
   // --- 搜索事件绑定 ---
   let searchTimer = null;
   searchInput.addEventListener("input", () => {
@@ -580,14 +783,38 @@ function openBrowser(node) {
     searchClear.style.display = searchKeyword ? "block" : "none";
     if (searchTimer) clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
-      renderFilteredItems(0);
-    }, 150);
+      if (isGlobalSearch) {
+        performGlobalSearch();
+      } else {
+        renderFilteredItems(0);
+      }
+    }, 200);
   });
   searchClear.addEventListener("click", () => {
     searchInput.value = "";
     searchKeyword = "";
     searchClear.style.display = "none";
-    renderFilteredItems(0);
+    if (isGlobalSearch) {
+      performGlobalSearch();
+    } else {
+      renderFilteredItems(0);
+    }
+    searchInput.focus();
+  });
+  globalToggle.addEventListener("click", () => {
+    isGlobalSearch = !isGlobalSearch;
+    globalToggle.classList.toggle("active", isGlobalSearch);
+    searchInput.placeholder = isGlobalSearch ? "全局搜索所有分组..." : "搜索提示词 / 项目名称...";
+    // 清除分组 badge
+    for (const b of groupsCol.querySelectorAll(".pim-group-badge")) b.remove();
+    if (searchKeyword.trim()) {
+      if (isGlobalSearch) {
+        performGlobalSearch();
+      } else {
+        // 退出全局模式：回到当前分组的过滤
+        if (currentGroup) loadGroup(currentGroup);
+      }
+    }
     searchInput.focus();
   });
 
@@ -599,6 +826,11 @@ function openBrowser(node) {
     searchInput.value = "";
     searchKeyword = "";
     searchClear.style.display = "none";
+    isGlobalSearch = false;
+    globalToggle.classList.remove("active");
+    searchInput.placeholder = "搜索提示词 / 项目名称...";
+    allGroupsCache = {};
+    cachedGroupNames = [];
 
     groupsCol.appendChild(el("div", { class: "pim-load-empty" }, "加载分组中..."));
 
@@ -622,6 +854,7 @@ function openBrowser(node) {
     }
 
     let firstBtn = null;
+    cachedGroupNames = groups;  // 同步分组名到全局搜索缓存
     groups.forEach((gName) => {
       const btn = el(
         "button",
@@ -632,16 +865,37 @@ function openBrowser(node) {
               b.classList.remove("active");
             }
             btn.classList.add("active");
-            // 切换分组时清空搜索
+
+            // 全局搜索模式下：保持搜索状态，滚动到该分组的搜索结果
+            if (isGlobalSearch && searchKeyword.trim()) {
+              // 找到该分组的分组标签并滚动到可见区域
+              const labels = itemsList.querySelectorAll(".pim-global-group-label");
+              for (const label of labels) {
+                if (label.textContent.includes(gName)) {
+                  label.scrollIntoView({ block: "start", behavior: "smooth" });
+                  // 选中该分组下的第一条结果
+                  const nextItem = label.nextElementSibling;
+                  if (nextItem && nextItem.classList.contains("pim-load-item")) {
+                    nextItem.click();
+                  }
+                  break;
+                }
+              }
+              return;
+            }
+
+            // 普通模式：切换分组时清空搜索
             searchInput.value = "";
             searchKeyword = "";
             searchClear.style.display = "none";
             searchStats.textContent = "";
+            for (const b of groupsCol.querySelectorAll(".pim-group-badge")) b.remove();
             await loadGroup(gName);
           },
         },
         gName
       );
+      btn._pimGroupName = gName;  // 存储分组名供全局搜索 badge 使用
       if (!firstBtn) firstBtn = btn;
       groupsCol.appendChild(btn);
     });
