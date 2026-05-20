@@ -133,6 +133,57 @@ function ensureCss() {
   padding: 6px;
   color: rgba(255,255,255,0.65);
 }
+.pim-search-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+.pim-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 28px 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: #eee;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pim-search-input::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+.pim-search-input:focus {
+  border-color: rgba(120,170,255,0.6);
+  box-shadow: 0 0 0 2px rgba(120,170,255,0.15);
+}
+.pim-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: none;
+}
+.pim-search-clear:hover {
+  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.1);
+}
+.pim-search-highlight {
+  background: rgba(255,200,50,0.35);
+  border-radius: 2px;
+}
+.pim-search-stats {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  padding: 0 2px 4px;
+}
 `;
   document.head.appendChild(style);
 }
@@ -232,8 +283,21 @@ function openBrowser(node) {
 
   const body = el("div", { class: "pim-load-body" });
   const groupsCol = el("div", { class: "pim-load-groups" });
-  const itemsCol = el("div", { class: "pim-load-items" });
+  const itemsCol = el("div", { class: "pim-load-items", style: "display:flex;flex-direction:column;" });
   const previewCol = el("div", { class: "pim-load-preview" });
+
+  // --- 搜索框 ---
+  const searchWrap = el("div", { class: "pim-search-wrap" });
+  const searchInput = el("input", {
+    class: "pim-search-input",
+    type: "text",
+    placeholder: "搜索提示词 / 项目名称...",
+  });
+  const searchClear = el("button", { class: "pim-search-clear", title: "清除搜索" }, "✕");
+  searchWrap.append(searchInput, searchClear);
+  const searchStats = el("div", { class: "pim-search-stats" });
+  const itemsList = el("div", { style: "flex:1;overflow:auto;" });
+  itemsCol.append(searchWrap, searchStats, itemsList);
 
   body.append(groupsCol, itemsCol, previewCol);
   inner.append(header, body);
@@ -242,7 +306,33 @@ function openBrowser(node) {
 
   let currentGroup = null;
   let currentItems = [];
+  let filteredItems = [];  // 搜索过滤后的条目
+  let filteredMap = [];    // filteredItems[i] 对应 currentItems 中的原始索引
   let selectedIndex = -1;
+  let searchKeyword = "";
+
+  /** 在文本中高亮关键词（返回 DOM 片段） */
+  function highlightText(text, keyword) {
+    if (!keyword) return document.createTextNode(text);
+    const frag = document.createDocumentFragment();
+    const lowerText = text.toLowerCase();
+    const lowerKw = keyword.toLowerCase();
+    let cursor = 0;
+    while (cursor < text.length) {
+      const pos = lowerText.indexOf(lowerKw, cursor);
+      if (pos === -1) {
+        frag.appendChild(document.createTextNode(text.slice(cursor)));
+        break;
+      }
+      if (pos > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, pos)));
+      const mark = document.createElement("span");
+      mark.className = "pim-search-highlight";
+      mark.textContent = text.slice(pos, pos + keyword.length);
+      frag.appendChild(mark);
+      cursor = pos + keyword.length;
+    }
+    return frag;
+  }
 
   function renderPreview(idx) {
     previewCol.innerHTML = "";
@@ -361,10 +451,99 @@ function openBrowser(node) {
     previewCol.append(imgEl, el("div", { style: "margin-bottom:6px;" }, useBtn, copyBtn, delBtn), promptBox);
   }
 
+  /** 渲染过滤后的条目列表 */
+  function renderFilteredItems(selectFilteredIdx = 0) {
+    itemsList.innerHTML = "";
+    searchStats.textContent = "";
+    previewCol.innerHTML = "";
+
+    if (!currentItems.length) {
+      itemsList.appendChild(el("div", { class: "pim-load-empty" }, "此分组暂无记录。"));
+      previewCol.appendChild(el("div", { class: "pim-load-empty" }, "暂无可预览的图片。"));
+      return;
+    }
+
+    // 根据搜索关键词过滤
+    const kw = searchKeyword.trim().toLowerCase();
+    filteredItems = [];
+    filteredMap = [];
+    currentItems.forEach((it, idx) => {
+      if (!kw) {
+        filteredItems.push(it);
+        filteredMap.push(idx);
+        return;
+      }
+      const prompt = (it.prompt_clean || it.prompt_original || "").toLowerCase();
+      const name = (it.item_name || "").toLowerCase();
+      if (prompt.includes(kw) || name.includes(kw)) {
+        filteredItems.push(it);
+        filteredMap.push(idx);
+      }
+    });
+
+    // 显示过滤统计信息
+    if (kw) {
+      searchStats.textContent = `找到 ${filteredItems.length} / ${currentItems.length} 条`;
+    }
+
+    if (!filteredItems.length) {
+      itemsList.appendChild(el("div", { class: "pim-load-empty" }, kw ? "没有匹配的记录。" : "此分组暂无记录。"));
+      previewCol.appendChild(el("div", { class: "pim-load-empty" }, "暂无可预览的图片。"));
+      selectedIndex = -1;
+      return;
+    }
+
+    // 修正选中索引
+    let targetFilteredIdx = selectFilteredIdx;
+    if (targetFilteredIdx >= filteredItems.length) targetFilteredIdx = 0;
+    if (targetFilteredIdx < 0) targetFilteredIdx = 0;
+
+    let targetRow = null;
+    filteredItems.forEach((it, fIdx) => {
+      const origIdx = filteredMap[fIdx];
+      let title = (it.prompt_clean || it.prompt_original || "").split(/\r?\n/)[0] || `(记录 ${origIdx})`;
+      if (it.item_name) {
+        title = `[${it.item_name}] ${title}`;
+      }
+      const sub = new Date((it.ts || 0) * 1000).toLocaleString();
+
+      // 构建带高亮的标题元素
+      const titleEl = el("div", { class: "pim-load-item-title" });
+      titleEl.appendChild(highlightText(title, kw ? searchKeyword.trim() : ""));
+
+      const row = el(
+        "div",
+        {
+          class: "pim-load-item" + (fIdx === targetFilteredIdx ? " active" : ""),
+          onclick: () => {
+            selectedIndex = origIdx;
+            for (const item of itemsList.querySelectorAll(".pim-load-item")) {
+              item.classList.remove("active");
+            }
+            row.classList.add("active");
+            renderPreview(origIdx);
+          },
+        },
+        titleEl,
+        el("div", { class: "pim-load-item-sub" }, sub)
+      );
+      itemsList.appendChild(row);
+      if (fIdx === targetFilteredIdx) targetRow = row;
+    });
+
+    selectedIndex = filteredMap[targetFilteredIdx];
+    renderPreview(selectedIndex);
+
+    // 将选中条目滚动到列表可见区域
+    if (targetRow) {
+      requestAnimationFrame(() => targetRow.scrollIntoView({ block: "nearest" }));
+    }
+  }
+
   async function loadGroup(name, initialIndex = 0) {
     currentGroup = name;
     selectedIndex = -1;
-    itemsCol.innerHTML = "";
+    itemsList.innerHTML = "";
     previewCol.innerHTML = "";
 
     const data = await jget(API_GROUP(name));
@@ -372,7 +551,8 @@ function openBrowser(node) {
     currentItems = items;
 
     if (!items.length) {
-      itemsCol.appendChild(el("div", { class: "pim-load-empty" }, "此分组暂无记录。"));
+      searchStats.textContent = "";
+      itemsList.appendChild(el("div", { class: "pim-load-empty" }, "此分组暂无记录。"));
       previewCol.appendChild(el("div", { class: "pim-load-empty" }, "暂无可预览的图片。"));
       return;
     }
@@ -385,46 +565,40 @@ function openBrowser(node) {
       targetIdx = 0;
     }
 
-    let targetRow = null;
-    items.forEach((it, idx) => {
-      let title = (it.prompt_clean || it.prompt_original || "").split(/\r?\n/)[0] || `(记录 ${idx})`;
-      if (it.item_name) {
-        title = `[${it.item_name}] ${title}`;
-      }
-      const sub = new Date((it.ts || 0) * 1000).toLocaleString();
-      const row = el(
-        "div",
-        {
-          class: "pim-load-item" + (idx === targetIdx ? " active" : ""),
-          onclick: () => {
-            selectedIndex = idx;
-            for (const item of itemsCol.querySelectorAll(".pim-load-item")) {
-              item.classList.remove("active");
-            }
-            row.classList.add("active");
-            renderPreview(idx);
-          },
-        },
-        el("div", { class: "pim-load-item-title" }, title),
-        el("div", { class: "pim-load-item-sub" }, sub)
-      );
-      itemsCol.appendChild(row);
-      if (idx === targetIdx) targetRow = row;
-    });
-
-    selectedIndex = targetIdx;
-    renderPreview(targetIdx);
-
-    // 将选中条目滚动到列表可见区域
-    if (targetRow) {
-      requestAnimationFrame(() => targetRow.scrollIntoView({ block: "nearest" }));
-    }
+    // 如果有搜索关键词，找到目标索引在过滤列表中的位置
+    renderFilteredItems(
+      searchKeyword.trim()
+        ? 0  // 有搜索时默认选第一条匹配项
+        : filteredMap.indexOf(targetIdx) >= 0 ? filteredMap.indexOf(targetIdx) : targetIdx
+    );
   }
+
+  // --- 搜索事件绑定 ---
+  let searchTimer = null;
+  searchInput.addEventListener("input", () => {
+    searchKeyword = searchInput.value;
+    searchClear.style.display = searchKeyword ? "block" : "none";
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      renderFilteredItems(0);
+    }, 150);
+  });
+  searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    searchKeyword = "";
+    searchClear.style.display = "none";
+    renderFilteredItems(0);
+    searchInput.focus();
+  });
 
   async function init() {
     groupsCol.innerHTML = "";
-    itemsCol.innerHTML = "";
+    itemsList.innerHTML = "";
     previewCol.innerHTML = "";
+    searchStats.textContent = "";
+    searchInput.value = "";
+    searchKeyword = "";
+    searchClear.style.display = "none";
 
     groupsCol.appendChild(el("div", { class: "pim-load-empty" }, "加载分组中..."));
 
@@ -458,6 +632,11 @@ function openBrowser(node) {
               b.classList.remove("active");
             }
             btn.classList.add("active");
+            // 切换分组时清空搜索
+            searchInput.value = "";
+            searchKeyword = "";
+            searchClear.style.display = "none";
+            searchStats.textContent = "";
             await loadGroup(gName);
           },
         },
